@@ -256,8 +256,28 @@ const state = {step:-1,a:blank(),view:"quiz",rid:"",saved:false,c:blankContact()
 const app = document.getElementById("app");
 const esc = s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+/* ===== 記住上次的問卷（只存在這支手機的瀏覽器，30 天後失效） ===== */
+const STORE_KEY="janice-quiz-v1", STORE_DAYS=30;
+function persist(){
+  if(state.resume) return;   // 首頁還在問要不要接續時，先別蓋掉上次的紀錄
+  try{
+    const c=state.c;
+    localStorage.setItem(STORE_KEY,JSON.stringify({t:Date.now(),step:state.step,a:state.a,rid:state.rid,saved:state.saved,
+      c:{name:c.name,lineId:c.lineId,email:c.email}}));
+  }catch(e){}
+}
+function restore(){
+  try{
+    const d=JSON.parse(localStorage.getItem(STORE_KEY));
+    return d&&Date.now()-d.t<STORE_DAYS*864e5&&d.a?d:null;
+  }catch(e){ return null; }
+}
+function forget(){ try{ localStorage.removeItem(STORE_KEY); }catch(e){} }
+function resetAll(){ forget(); state.step=-1; state.a=blank(); state.saved=false; state.rid=""; state.c=blankContact(); state.view="quiz"; }
+
 function render(){
   window.scrollTo(0,0);
+  persist();
   if(state.view==="auth") return renderAuth();
   if(state.view==="confirm") return renderConfirm();
   if(state.view==="done") return renderDone();
@@ -265,6 +285,10 @@ function render(){
 }
 
 function renderIntro(){
+  const last=state.resume, done=last&&last.step>=STEPS.length;
+  const resume=last?`<div class="tip" style="margin-bottom:4px"><b>${done?"你之前做過這份檢測":"你上次做到一半"}</b>
+      ${done?"可以直接看上次的結果，或重新做一次。":`上次做到第 ${Math.min(last.step+1,STEPS.length)} 題，可以接著做完。`}</div>
+    <button class="next" id="resume" type="button">${done?"看上次的結果":"繼續上次的檢測"}</button>`:"";
   app.innerHTML=`<div class="screen card">
     <div class="who"><div class="avatar">${esc(CONFIG.name[0])}</div><div><b>${esc(CONFIG.title)} ${esc(CONFIG.name)}</b><span>減重諮詢前的小檢測</span></div></div>
     <h1>為什麼你總是瘦不下來？</h1>
@@ -274,9 +298,12 @@ function renderIntro(){
       <li>參考國健署體位標準與國外肥胖表型研究設計</li>
       <li>會先幫你確認身體狀況，安全第一</li>
     </ul>
-    <button class="next" id="go" type="button">開始檢測</button>
-    <p class="legal">本檢測為飲食與生活習慣的初步參考，不是醫療診斷。作答內容會以匿名方式保存，只有在你預約諮詢時，才會請你留下聯絡資料。</p></div>`;
-  document.getElementById("go").onclick=()=>{state.step=0;render();};
+    ${resume}
+    <button class="next${last?" ghost":""}" id="go" type="button">${last?"重新開始":"開始檢測"}</button>
+    <p class="legal">本檢測為飲食與生活習慣的初步參考，不是醫療診斷。作答內容會以匿名方式保存，只有在你預約諮詢時，才會請你留下聯絡資料。你的作答也會暫存在這支手機的瀏覽器 ${STORE_DAYS} 天，方便下次接著看；按「重新開始」或「重新檢測」就會清除。</p></div>`;
+  document.getElementById("go").onclick=()=>{resetAll();state.resume=null;state.step=0;render();};
+  const r=document.getElementById("resume");
+  if(r) r.onclick=()=>{state.step=Math.min(last.step,STEPS.length);state.resume=null;render();};
 }
 
 function valid(s){
@@ -428,7 +455,7 @@ function renderResult(){
     <button class="restart" id="re" type="button">重新檢測</button>
     <p class="legal">本檢測參考衛生福利部國民健康署成人體位標準，以及 Mayo Clinic 研究團隊提出的肥胖表型架構設計，為初步自評參考，不能取代醫師診斷或治療。</p></div>`;
   const book=document.getElementById("book"); if(book) book.onclick=()=>{state.err="";state.view="auth";render();};
-  document.getElementById("re").onclick=()=>{state.step=-1;state.a=blank();state.saved=false;state.rid="";state.c=blankContact();render();};
+  document.getElementById("re").onclick=()=>{resetAll();state.resume=null;render();};
 }
 
 /* ===== 存資料（Apps Script） ===== */
@@ -628,6 +655,12 @@ function renderDone(){
 
 /* ===== 啟動 ===== */
 function boot(){
+  const last=restore();
+  if(last){
+    Object.assign(state,{a:Object.assign(blank(),last.a),rid:last.rid||"",saved:!!last.saved});
+    Object.assign(state.c,last.c||{});
+    if(last.step>=0) state.resume=last;
+  }
   const q=new URLSearchParams(location.search), rid=q.get("book");
   if(rid&&/^[\w-]{16,64}$/.test(rid)){ state.rid=rid; state.saved=true; state.view="auth"; }
   if(q.get("via")==="line"&&CONFIG.liffId){

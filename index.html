@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>體重卡關類型檢測｜營養師 Janice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D6E0CE; --bg-deep:#C5D3BB; --surface:#F7F9F4; --ink:#243026; --muted:#56655A; --line:#C3CFBA;
+  --brand:#5B7655; --brand-ink:#FFFFFF; --brand-soft:#E4ECDD;
+  --warn-bg:#FBF0D9; --warn-ink:#6B4A00; --alert-bg:#F8E3DF; --alert-ink:#8A2A1E;
+  --t-full:#C08A4E; --t-sugar:#C2695A; --t-mood:#8A78A8; --t-save:#4F8784; --t-night:#4F5E87;
+  --line-green:#06C755;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1A221B; --bg-deep:#141B15; --surface:#232D24; --ink:#E5ECE3; --muted:#A6B4A6; --line:#364337;
+  --brand:#A9C49F; --brand-ink:#142014; --brand-soft:#2C3A2C;
+  --warn-bg:#3A3015; --warn-ink:#F2D58D; --alert-bg:#3D211D; --alert-ink:#F3B3A9; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#1A221B; --bg-deep:#141B15; --surface:#232D24; --ink:#E5ECE3; --muted:#A6B4A6; --line:#364337;
+  --brand:#A9C49F; --brand-ink:#142014; --brand-soft:#2C3A2C;
+  --warn-bg:#3A3015; --warn-ink:#F2D58D; --alert-bg:#3D211D; --alert-ink:#F3B3A9; color-scheme:dark;}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);min-height:100%;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:20px 18px 48px}
+h1,h2,h3{font-family:"Noto Serif TC","PingFang TC",serif;line-height:1.35;margin:0}
+h1{font-size:30px} h2{font-size:22px} p{margin:0}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.card{background:var(--surface);border-radius:22px;padding:26px 22px;box-shadow:0 1px 0 var(--line)}
+.who{display:flex;gap:14px;align-items:center;margin-bottom:24px}
+.avatar{width:54px;height:54px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;
+  font-family:"Noto Serif TC",serif;font-size:22px;flex:none}
+.who b{display:block;font-size:16px} .who span{color:var(--muted);font-size:14px}
+.lead{color:var(--muted);margin:14px 0 22px}
+.facts{list-style:none;padding:0;margin:0 0 26px;display:grid;gap:10px}
+.facts li{display:flex;gap:10px;align-items:baseline}
+.facts li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand);flex:none;transform:translateY(-2px)}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.back{background:none;border:0;padding:6px 2px;color:var(--muted);cursor:pointer;font-size:15px}
+.bar{flex:1;height:6px;background:var(--bg-deep);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:3px;transition:width .3s}
+.count{color:var(--muted);font-size:14px;white-space:nowrap}
+.part{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--brand);margin-bottom:6px}
+.hint{color:var(--muted);font-size:15px;margin:6px 0 18px}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 15px;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:14px;cursor:pointer}
+.opt .box{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;flex:none;display:grid;place-items:center}
+.opt.single .box{border-radius:50%}
+.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.opt[aria-pressed="true"] .box{background:var(--brand);border-color:var(--brand)}
+.opt[aria-pressed="true"] .box::after{content:"";width:10px;height:6px;border:2.5px solid var(--brand-ink);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button{padding:12px 2px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;
+  font-size:14px;line-height:1.3;display:grid;gap:6px;justify-items:center}
+.scale button i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);display:block}
+.scale button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);font-weight:700}
+.scale button[aria-pressed="true"] i{background:var(--brand);border-color:var(--brand)}
+.group{margin-bottom:20px}
+.group h3{font-family:inherit;font-size:16px;font-weight:700;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);font-weight:700}
+.fields{display:grid;gap:16px}
+.field label{display:block;font-weight:700;font-size:16px;margin-bottom:6px}
+.inwrap{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding-right:14px}
+.inwrap:focus-within{border-color:var(--brand)}
+.inwrap input{flex:1;min-width:0;border:0;background:transparent;padding:12px 14px;outline:none}
+.inwrap span{color:var(--muted);font-size:15px}
+.tip{background:var(--brand-soft);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--muted);line-height:1.7}
+.tip b{color:var(--ink)}
+.check{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:15px;color:var(--muted);cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.next{margin-top:22px;width:100%;padding:15px;border:0;border-radius:14px;background:var(--brand);color:var(--brand-ink);
+  font-weight:700;font-size:17px;cursor:pointer;display:block;text-align:center;text-decoration:none}
+.next:disabled{opacity:.4;cursor:not-allowed}
+.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand);margin-top:10px}
+.shapes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.shape{display:grid;justify-items:center;gap:4px;padding:12px 6px 14px;border:1.5px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer;text-align:center}
+.shape svg{width:100%;max-width:84px;height:auto}
+.shape b{font-size:16px}
+.shape{position:relative}
+.fruit{position:absolute;top:8px;right:8px;width:30px;height:30px;display:block}
+.fruit svg{width:100%;height:100%;display:block}
+.shape small{font-size:12.5px;color:var(--muted);line-height:1.4}
+.shape[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.shape .fig{fill:var(--bg-deep);stroke:var(--brand);stroke-width:1.6}
+.shape .zone{fill:var(--t-full);opacity:.55}
+.unsure{margin-top:10px}
+.opth{font-size:14px;font-weight:700;color:var(--brand);margin:8px 0 -2px}
+.shape-note{background:var(--brand-soft);border-radius:14px;padding:12px 14px;margin-top:10px;font-size:15px}
+.shape-note b{display:block}
+/* result */
+.tag{color:var(--muted);font-size:15px;margin-bottom:4px}
+.typename{font-size:34px;margin-bottom:6px}
+.combo{display:inline-block;font-size:14px;font-weight:700;padding:3px 12px;border-radius:999px;background:var(--brand-soft);color:var(--brand);margin-bottom:12px}
+.quote{font-family:"Noto Serif TC",serif;font-size:19px;line-height:1.6;border-left:4px solid var(--tc);padding-left:12px;margin:10px 0 14px}
+.desc{color:var(--muted)}
+.bars{display:grid;gap:12px;margin-top:6px}
+.brow{display:grid;grid-template-columns:96px 1fr 40px;gap:10px;align-items:center;font-size:15px}
+.btrack{height:12px;border-radius:6px;background:var(--bg-deep);overflow:hidden}
+.btrack i{display:block;height:100%;border-radius:6px}
+.brow em{font-style:normal;color:var(--muted);text-align:right;font-size:14px}
+.block{margin-top:22px}
+.block>h2{margin-bottom:12px}
+.action{border-radius:16px;padding:16px;background:var(--brand-soft)}
+.action b{display:block;font-size:17px;margin-bottom:4px}
+.action span{color:var(--muted);font-size:15px}
+.body-info{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--brand-soft);border-radius:14px;padding:12px 14px}
+.stat small{display:block;color:var(--muted);font-size:13px}
+.stat b{font-size:20px}
+.stat span{display:block;font-size:14px;color:var(--muted)}
+.notice{border-radius:14px;padding:14px 16px;margin-top:12px;font-size:15px}
+.notice b{display:block;margin-bottom:2px;font-size:16px}
+.notice.warn{background:var(--warn-bg);color:var(--warn-ink)} .notice.alert{background:var(--alert-bg);color:var(--alert-ink)}
+.small{font-size:13px;color:var(--muted);margin-top:8px}
+.legal{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.7}
+.restart{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0;margin-top:14px;font-size:14px}
+/* booking */
+.auth{display:grid;gap:12px}
+.authbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;padding:12px 16px;border-radius:999px;
+  border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:16px;cursor:pointer;text-decoration:none;color:var(--ink)}
+.authbtn.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
+.authbtn svg{width:22px;height:22px;flex:none}
+.gbtn{display:flex;justify-content:center;min-height:44px}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.linkbox{width:100%;margin-top:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px;color:var(--ink)}
+.notice .next{margin-top:10px}
+.field label small{font-weight:500;font-size:13px;margin-left:6px;padding:1px 8px;border-radius:999px}
+.from{background:var(--brand-soft);color:var(--brand)}
+.optional{background:var(--bg-deep);color:var(--muted)}
+.fnote{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.6}
+.consent{align-items:flex-start;line-height:1.7;margin-top:4px}
+.consent input{margin-top:5px;flex:none}
+.err{color:var(--alert-ink);font-size:15px;margin-top:14px}
+.err:empty{display:none}
+.emailbox{font-size:20px;font-weight:700;word-break:break-all;background:var(--brand-soft);border-radius:12px;padding:10px 14px;margin:-12px 0 14px}
+.screen{animation:in .25s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}.bar i{transition:none}}
+@media (max-width:380px){.scale button{font-size:13px}.brow{grid-template-columns:84px 1fr 34px}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+<script>
+/* ===== 設定 ===== */
+const CONFIG = {
+  name:"Janice", title:"營養師",
+  lineUrl:"https://line.me/R/ti/p/@157shzta",       // LINE 官方帳號加好友連結
+  bookUrl:"",          // ← Google 日曆預約頁網址
+  scriptUrl:"",        // ← Apps Script 網頁應用程式網址（結尾是 /exec）
+  liffId:"",           // ← LINE Developers 的 LIFF ID（留空就不顯示 LINE 登入）
+  googleClientId:"",   // ← Google OAuth 用戶端 ID（留空就不顯示 Google 登入）
+  retention:"2 年",    // ← 資料保存期間，會寫在個資同意裡
+  lineIdOptionalForLine:true,   // 用 LINE 登入的人，LINE ID 改成選填
+};
+
+/* ===== 五種類型 ===== */
+const TYPES = {
+  night:{name:"熬夜時差型",color:"var(--t-night)",quote:"你的身體一直在倒時差。",
+    desc:"睡不夠、太晚吃，會讓食慾荷爾蒙跟著亂掉，隔天特別想吃甜、吃澱粉。先把睡眠和吃飯時間調回來，其他努力才會有效。",
+    act:{t:"這週先把晚餐固定在 8 點前吃完",d:"睡前一小時放下手機，盡量每天同一個時間起床。作息穩了，嘴饞會跟著少很多。"}},
+  mood:{name:"心累嘴饞型",color:"var(--t-mood)",quote:"你餓的不是肚子，是心。",
+    desc:"壓力大、無聊、累了一整天，食物就成了最快的安慰。這很正常，但光靠忍耐撐不久。先認識自己什麼時候會想吃，再找到不靠食物也能放鬆的方法。",
+    act:{t:"想吃的時候，先停 10 分鐘",d:"問自己：「我是肚子餓，還是累了、煩了？」如果是後者，先喝杯溫水、走一走，再決定要不要吃。"}},
+  sugar:{name:"血糖雲霄飛車型",color:"var(--t-sugar)",quote:"才剛吃完，怎麼又餓了？",
+    desc:"你的飽足感來得快、走得也快，餐跟餐中間總想找東西吃。關鍵不是少吃，而是每一餐怎麼搭配，讓飽足感撐得更久。",
+    act:{t:"每餐都有一個手掌大的蛋白質",d:"蛋、豆腐、魚、雞肉都可以。白飯換成半碗糙米或地瓜，飽足感會撐得比較久。"}},
+  full:{name:"飽足感遲到型",color:"var(--t-full)",quote:"不是你貪吃，是大腦比較晚收到「飽了」的訊號。",
+    desc:"你常常吃到很撐才覺得夠，因為飽足訊號比別人慢半拍。這種類型不適合硬餓，而是要選份量大、熱量卻不高的食物，讓大腦來得及喊停。",
+    act:{t:"每餐先喝一碗清湯，或先吃一碗青菜",d:"再開始吃飯和肉，並把吃飯時間拉長到 20 分鐘以上。"}},
+  save:{name:"省電模式型",color:"var(--t-save)",quote:"吃得不多卻瘦不下來？你的身體可能開了省電模式。",
+    desc:"肌肉量偏低、活動量少，身體每天用掉的熱量就少，所以吃得不多也容易囤積。這時候再少吃只會更省電，要做的是把「耗電量」拉上來。",
+    act:{t:"每天加 10 分鐘的深蹲或爬樓梯",d:"同時每餐都要吃到足夠的蛋白質，幫助維持肌肉量。"}},
+};
+const ORDER = ["night","mood","sugar","full","save"];   // 同分時的優先順序
+
+/* ===== 題目 ===== */
+const FREQ = ["幾乎不會","偶爾","有時候","經常","幾乎每次"];
+const DAYS = ["0–1 天","2 天","3–4 天","5–6 天","每天"];
+const STEPS = [
+  {id:"body",type:"body",part:"基本資料",title:"先認識一下你"},
+  {id:"shape",type:"shape",part:"基本資料",title:"照鏡子看看，你的身形比較像哪一種？",hint:"看的是脂肪比較集中在哪裡，選最接近的就好。"},
+  {id:"q3",type:"scale",t:"full",labels:FREQ,part:"你的飲食節奏",title:"吃飯時，我通常要吃到很撐，才覺得「夠了」"},
+  {id:"q4",type:"scale",t:"sugar",labels:FREQ,part:"你的飲食節奏",title:"正餐吃完不到 3 小時，我就又覺得餓了"},
+  {id:"q5",type:"scale",t:"mood",labels:FREQ,part:"你的飲食節奏",title:"壓力大、心情不好或無聊時，我會想找東西吃"},
+  {id:"q6",type:"scale",t:"save",labels:FREQ,part:"你的飲食節奏",title:"我覺得自己吃得不算多，體重卻還是慢慢往上"},
+  {id:"q7",type:"scale",t:"night",labels:DAYS,part:"你的飲食節奏",title:"一週有幾天，睡不到 6 小時？"},
+  {id:"q8",type:"scale",t:"full",labels:FREQ,part:"你的飲食節奏",title:"遇到喜歡的食物，我很難吃到一半就停下來"},
+  {id:"q9",type:"scale",t:"sugar",labels:FREQ,part:"你的飲食節奏",title:"兩餐之間，我常常需要吃點東西才撐得住"},
+  {id:"q10",type:"scale",t:"mood",labels:FREQ,part:"你的飲食節奏",title:"我會用吃東西來犒賞自己，或讓心情變好"},
+  {id:"q11",type:"scale",t:"save",labels:FREQ,part:"你的飲食節奏",title:"一天當中，我大部分時間都是坐著的",hint:"例如工作、通勤、滑手機"},
+  {id:"q12",type:"scale",t:"night",labels:DAYS,part:"你的飲食節奏",title:"一週有幾天，會在晚上 9 點以後吃正餐或宵夜？"},
+  {id:"q13",type:"multi",none:"none",part:"安全確認",title:"你的身體狀況",hint:"可複選。有些飲食調整需要配合身體狀況，所以一定要先問。",
+   options:[{v:"none",label:"都沒有"},
+            {h:"已經知道的狀況"},
+            {v:"preg",label:"懷孕或哺乳中"},{v:"dm",label:"糖尿病，且使用胰島素或降血糖藥"},
+            {v:"kidney",label:"腎臟病"},{v:"endo",label:"甲狀腺疾病或多囊性卵巢"},{v:"drug",label:"長期使用類固醇或精神科藥物"},
+            {v:"other",label:"其他慢性病正在治療中"},
+            {h:"最近出現的變化"},
+            {v:"mens",label:"月經週期不規則，或很久才來一次（女性）"},
+            {v:"andro",label:"痘痘變多，或臉上、身上的毛髮變多"},{v:"thy",label:"容易怕冷、疲倦，皮膚變乾"},
+            {v:"fast",label:"半年內體重增加得很快"},
+            {v:"cush",label:"臉變圓、脖子後面變厚，或身上出現紫紅色紋路（不是懷孕造成的）"}]},
+  {id:"q14",type:"multi",none:"none",part:"安全確認",title:"最近三個月，你有沒有以下經驗？",hint:"可複選，照實回答就好，這能幫我給你更適合的建議。",
+   options:[{v:"none",label:"都沒有"},{v:"binge",label:"常在短時間內吃下大量食物，當下覺得停不下來"},
+            {v:"comp",label:"吃太多之後，會催吐、用瀉藥，或隔天完全不吃來彌補"},
+            {v:"body",label:"對體重或身材的擔心，已經明顯影響到生活或心情"},
+            {v:"wtloss",label:"沒有刻意減重，體重卻在三個月內明顯下降"}]},
+  {id:"q15",type:"single",part:"最後一題",title:"如果現在開始調整飲食，你覺得自己準備好了嗎？",
+   options:[{v:"think",label:"還在考慮"},{v:"try",label:"想試試看，但怕做不到"},{v:"ready",label:"準備好了，想要有人帶"}]},
+];
+
+/* ===== 身形圖示 ===== */
+const fig=(body,zone)=>`<svg viewBox="0 0 100 160" aria-hidden="true"><circle class="fig" cx="50" cy="17" r="11"/><path class="fig" d="${body}"/>${zone}</svg>`;
+const FRUITS={
+  apple:`<svg viewBox="0 0 40 40"><path d="M20 6 Q21 2 24 1.5" stroke="#6B5A3E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M22 6 Q28 2 32 6 Q27 9 22 6 Z" fill="#6E9A5E"/><path d="M20 11 C14 7 5 9 5 20 C5 30 12 37 20 35 C28 37 35 30 35 20 C35 9 26 7 20 11 Z" fill="#C9605A"/><path d="M11 17 Q12 13 15 12" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  pear:`<svg viewBox="0 0 40 40"><path d="M20 6 Q20 3 23 1.5" stroke="#6B5A3E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M21 5 Q27 1 31 5 Q26 8 21 5 Z" fill="#6E9A5E"/><path d="M20 6 C16 6 15 10 15 14 C15 18 8 21 8 28 C8 34 13 38 20 38 C27 38 32 34 32 28 C32 21 25 18 25 14 C25 10 24 6 20 6 Z" fill="#B5BE5A"/><path d="M13 27 Q13 23 16 21" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  even:`<svg viewBox="0 0 40 40"><path d="M7 9 C7 25 18 35 34 31 C36 30.4 36 27.6 34 27.6 C22 28 13.5 20 12.5 8.5 C12.2 6.5 7 6.5 7 9 Z" fill="#E4BD4E"/><path d="M7.5 8 L8 4 L11.5 4 L12 7.5" fill="#7A6A3E"/><path d="M34 31.2 L37 31 L36.5 28" stroke="#7A6A3E" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M11 14 Q13 22 20 26" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  gourd:`<svg viewBox="0 0 40 40"><path d="M20 6 Q20 3 23 1.5" stroke="#6B5A3E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M21 4.5 Q27 0.5 31 4.5 Q26 7.5 21 4.5 Z" fill="#6E9A5E"/><circle cx="20" cy="13" r="7.5" fill="#C7AE5C"/><circle cx="20" cy="27.5" r="11" fill="#C7AE5C"/><rect x="15" y="18" width="10" height="4" fill="#C7AE5C"/><path d="M14.5 19.5 Q20 22 25.5 19.5" stroke="#B8574E" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M13 26 Q13 22 16 21" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+};
+const SHAPES=[
+  {v:"apple",label:"蘋果型",sub:"肚子最明顯，四肢相對細",
+   svg:fig("M38 34 Q50 30 62 34 L70 40 Q86 62 84 82 Q82 102 68 110 L64 154 L54 154 L51 116 L49 116 L46 154 L36 154 L32 110 Q18 102 16 82 Q14 62 30 40 Z",'<ellipse class="zone" cx="50" cy="80" rx="27" ry="20"/>')},
+  {v:"pear",label:"西洋梨型",sub:"臀部、大腿比較有肉",
+   svg:fig("M40 34 Q50 30 60 34 L66 40 Q70 56 64 72 Q82 90 80 112 L68 154 L56 154 L51 120 L49 120 L44 154 L32 154 L20 112 Q18 90 36 72 Q30 56 34 40 Z",'<ellipse class="zone" cx="50" cy="106" rx="27" ry="16"/>')},
+  {v:"even",label:"香蕉型",sub:"全身差不多平均",
+   svg:fig("M38 34 Q50 30 62 34 L72 40 Q76 64 72 84 Q76 100 72 112 L64 154 L54 154 L51 118 L49 118 L46 154 L36 154 L28 112 Q24 100 28 84 Q24 64 28 40 Z",'<ellipse class="zone" cx="50" cy="80" rx="18" ry="12" style="opacity:.3"/><ellipse class="zone" cx="50" cy="106" rx="18" ry="10" style="opacity:.3"/>')},
+  {v:"gourd",label:"葫蘆型",sub:"肚子和臀腿都比較明顯",
+   svg:fig("M38 34 Q50 30 62 34 L70 40 Q84 58 80 76 Q77 84 74 88 Q86 98 82 114 L68 154 L56 154 L51 120 L49 120 L44 154 L32 154 L18 114 Q14 98 26 88 Q23 84 20 76 Q16 58 30 40 Z",'<ellipse class="zone" cx="50" cy="68" rx="24" ry="14"/><ellipse class="zone" cx="50" cy="106" rx="26" ry="13"/>')},
+];
+const SHAPE_TEXT={
+  apple:{t:"蘋果型（腹部型）",d:"脂肪主要囤在肚子，和內臟脂肪、三高風險的關係比較密切，腰圍是你最值得追蹤的數字。"},
+  pear:{t:"西洋梨型（下半身型）",d:"脂肪多在臀部和大腿，代謝風險相對較低。調整時需要多一點耐心，搭配肌力訓練效果會更好。"},
+  even:{t:"香蕉型（均勻型）",d:"脂肪分布比較平均，可以把重點放在整體體脂和肌肉量。"},
+  gourd:{t:"葫蘆型（混合型）",d:"肚子和臀腿都有囤積。只要肚子明顯，風險就要以肚子為準，腰圍是你最值得追蹤的數字，也要留意體重增加的原因。"},
+  unsure:{t:"還不確定",d:"下次可以對著鏡子看看正面和側面，或量一下腰圍和臀圍來比較。"},
+};
+
+/* ===== 狀態 ===== */
+const blank = ()=>({shape:"",endo:[],sex:"",age:"",h:"",w:"",waist:"",noWaist:false,q13:[],q14:[]});
+const blankContact = ()=>({method:"",name:"",lineId:"",email:"",lineUserId:"",idToken:"",from:{},consent:false});
+const state = {step:-1,a:blank(),view:"quiz",rid:"",saved:false,c:blankContact(),err:""};
+const app = document.getElementById("app");
+const esc = s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  window.scrollTo(0,0);
+  if(state.view==="auth") return renderAuth();
+  if(state.view==="confirm") return renderConfirm();
+  if(state.view==="done") return renderDone();
+  state.step<0?renderIntro():state.step>=STEPS.length?renderResult():renderStep(STEPS[state.step]);
+}
+
+function renderIntro(){
+  app.innerHTML=`<div class="screen card">
+    <div class="who"><div class="avatar">${esc(CONFIG.name[0])}</div><div><b>${esc(CONFIG.title)} ${esc(CONFIG.name)}</b><span>減重諮詢前的小檢測</span></div></div>
+    <h1>為什麼你總是瘦不下來？</h1>
+    <p class="lead">2 分鐘測出你的「體重卡關類型」。不是你意志力差，是還沒找到適合你類型的方法。</p>
+    <ul class="facts">
+      <li>共 15 題，大約 2 分鐘</li>
+      <li>參考國健署體位標準與國外肥胖表型研究設計</li>
+      <li>會先幫你確認身體狀況，安全第一</li>
+    </ul>
+    <button class="next" id="go" type="button">開始檢測</button>
+    <p class="legal">本檢測為飲食與生活習慣的初步參考，不是醫療診斷。作答內容會以匿名方式保存，只有在你預約諮詢時，才會請你留下聯絡資料。</p></div>`;
+  document.getElementById("go").onclick=()=>{state.step=0;render();};
+}
+
+function valid(s){
+  const a=state.a;
+  if(s.type==="profile") return a.sex&&a.age;
+  if(s.type==="body"){ const h=+a.h,w=+a.w,ws=+a.waist;
+    return a.sex&&a.age&&h>=120&&h<=220&&w>=30&&w<=250&&(a.noWaist||(ws>=50&&ws<=200)); }
+  if(s.type==="multi") return a[s.id].length>0;
+  if(s.type==="shape") return !!a.shape;
+  return a[s.id]!==undefined;
+}
+
+function renderStep(s){
+  const a=state.a, i=state.step, tot=STEPS.filter(visible).length, pos=STEPS.slice(0,i+1).filter(visible).length, pct=Math.round((pos-1)/tot*100);
+  let body="";
+  if(s.type==="profile"){
+    const g=(k,label,opts)=>`<div class="group"><h3>${label}</h3><div class="chips">${opts.map(o=>
+      `<button type="button" class="chip" data-k="${k}" data-v="${o}" aria-pressed="${a[k]===o}">${o}</button>`).join("")}</div></div>`;
+    body=g("sex","生理性別",["女性","男性"])+g("age","年齡",["未滿 18","18–29","30–39","40–49","50–64","65 以上"]);
+  }else if(s.type==="body"){
+    const g=(k,label,opts)=>`<div class="group"><h3>${label}</h3><div class="chips">${opts.map(o=>
+      `<button type="button" class="chip" data-k="${k}" data-v="${o}" aria-pressed="${a[k]===o}">${o}</button>`).join("")}</div></div>`;
+    const f=(k,label,unit,dis)=>`<div class="field"><label for="${k}">${label}</label>
+      <div class="inwrap"><input id="${k}" inputmode="decimal" value="${esc(a[k])}" ${dis?"disabled":""}><span>${unit}</span></div></div>`;
+    body=g("sex","生理性別",["女性","男性"])+g("age","年齡",["未滿 18","18–29","30–39","40–49","50–64","65 以上"])+`<div class="fields">${f("h","身高","公分")}${f("w","體重","公斤")}
+      <div>${f("waist","腰圍","公分",a.noWaist)}
+        <label class="check"><input type="checkbox" id="nw" ${a.noWaist?"checked":""}>我不知道腰圍，先跳過</label></div>
+      <div class="tip"><b>腰圍量法：</b>站直、雙腳與肩同寬，肚子放鬆，正常吐氣後，用皮尺沿著肚臍繞一圈。皮尺要貼著皮膚、保持水平，不要勒緊，也不要隔著衣服量。</div></div>`;
+  }else if(s.type==="shape"){
+    body=`<div class="shapes" role="group" aria-label="身形">${SHAPES.map(o=>
+      `<button type="button" class="shape" data-v="${o.v}" aria-pressed="${a.shape===o.v}">${o.svg}<span class="fruit" aria-hidden="true">${FRUITS[o.v]}</span><b>${o.label}</b><small>${o.sub}</small></button>`).join("")}</div>
+      <button type="button" class="opt single unsure" data-v="unsure" aria-pressed="${a.shape==="unsure"}"><span class="box" aria-hidden="true"></span><span>我不確定</span></button>`;
+  }else if(s.type==="scale"){
+    body=`<div class="scale" role="group" aria-label="${esc(s.title)}">${s.labels.map((l,k)=>
+      `<button type="button" data-v="${k+1}" aria-pressed="${a[s.id]===k+1}"><i aria-hidden="true"></i>${l}</button>`).join("")}</div>`;
+  }else{
+    const multi=s.type==="multi";
+    body=`<div class="opts">${s.options.map(o=>{if(o.h) return `<p class="opth">${esc(o.h)}</p>`;const on=multi?a[s.id].includes(o.v):a[s.id]===o.v;
+      return `<button type="button" class="opt ${multi?"":"single"}" data-v="${o.v}" aria-pressed="${on}"><span class="box" aria-hidden="true"></span><span>${esc(o.label)}</span></button>`;}).join("")}</div>`;
+  }
+  const last=i===STEPS.length-1, needBtn=!(s.type==="scale"||s.type==="single"||s.type==="shape")||last;
+  app.innerHTML=`<div class="screen card">
+    <div class="top"><button class="back" id="back" type="button">‹ 上一題</button>
+      <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div><span class="count">${pos} / ${tot}</span></div>
+    <p class="part">${esc(s.part)}</p><h2>${esc(s.title)}</h2>${s.hint?`<p class="hint">${esc(s.hint)}</p>`:`<div style="height:18px"></div>`}
+    ${body}
+    ${needBtn?`<button type="button" class="next" id="next" ${valid(s)?"":"disabled"}>${last?"看我的結果":"下一題"}</button>`:""}</div>`;
+
+  document.getElementById("back").onclick=()=>go(-1);
+  const next=document.getElementById("next"); if(next) next.onclick=()=>go(1);
+  const advance=()=>{const here=state.step;setTimeout(()=>{if(state.step===here)go(1);},220);};
+
+  if(s.type==="profile") app.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{a[b.dataset.k]=b.dataset.v;renderStep(s);});
+  else if(s.type==="body"){
+    const sync=()=>{["h","w","waist"].forEach(k=>a[k]=document.getElementById(k).value.trim());next.disabled=!valid(s);};
+    ["h","w","waist"].forEach(k=>document.getElementById(k).oninput=sync);
+    app.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{sync();a[b.dataset.k]=b.dataset.v;renderStep(s);});
+    document.getElementById("nw").onchange=e=>{sync();a.noWaist=e.target.checked;if(a.noWaist)a.waist="";renderStep(s);};
+  }else if(s.type==="shape") app.querySelectorAll(".shape,.unsure").forEach(b=>b.onclick=()=>{a.shape=b.dataset.v;renderStep(s);advance();});
+  else if(s.type==="scale") app.querySelectorAll(".scale button").forEach(b=>b.onclick=()=>{a[s.id]=+b.dataset.v;renderStep(s);advance();});
+  else if(s.type==="single") app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{a[s.id]=b.dataset.v;renderStep(s);if(!last)advance();});
+  else app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v; let arr=a[s.id];
+    if(arr.includes(v)) arr=arr.filter(x=>x!==v); else arr = v===s.none?[v]:arr.filter(x=>x!==s.none).concat(v);
+    a[s.id]=arr; renderStep(s);
+  });
+}
+
+/* ===== 導覽：跳過不適用的題目 ===== */
+function visible(s){ return !s.showIf || s.showIf(state.a); }
+function go(d){ let n=state.step+d; while(n>=0&&n<STEPS.length&&!visible(STEPS[n])) n+=d; state.step=n; render(); }
+
+/* ===== 計分 ===== */
+function compute(){
+  const a=state.a, sc={};
+  ORDER.forEach(t=>sc[t]=0);
+  STEPS.filter(s=>s.type==="scale").forEach(s=>sc[s.t]+=a[s.id]);
+  const ranked=[...ORDER].sort((x,y)=>sc[y]-sc[x]||ORDER.indexOf(x)-ORDER.indexOf(y));
+  const main=ranked[0], second=ranked[1];
+  const combo = sc[second]>=6 && sc[main]-sc[second]<=2 ? second : null;
+  const mild = sc[main]<=4;
+
+  const h=+a.h/100, w=+a.w, bmi=Math.round(w/(h*h)*10)/10;
+  const lvl = bmi<18.5?"體重過輕":bmi<24?"健康體位":bmi<27?"過重":bmi<30?"輕度肥胖":bmi<35?"中度肥胖":"重度肥胖";
+  const waistHigh = !a.noWaist && +a.waist >= (a.sex==="男性"?90:80);
+
+  const ed = a.q14.some(v=>["binge","comp","body"].includes(v));
+  const wtloss = a.q14.includes("wtloss");
+  const preg = a.q13.includes("preg");
+  const ENDO=["mens","andro","thy","fast","cush"];
+  const medical = a.q13.filter(v=>v!=="none"&&v!=="preg"&&!ENDO.includes(v));
+  const minor = a.age==="未滿 18";
+  const endo = a.q13.some(v=>ENDO.includes(v));
+  return {sc,main,combo,mild,bmi,lvl,waistHigh,ed,wtloss,preg,medical,minor,endo,under:bmi<18.5};
+}
+
+function renderResult(){
+  const r=compute(), a=state.a, T=TYPES[r.main], C=r.combo&&TYPES[r.combo];
+  const noPlan = r.ed||r.preg||r.minor||r.under;
+  saveDraft();
+
+  let notices="";
+  if(r.ed) notices+=`<div class="notice alert"><b>想先跟你聊聊</b>你勾選的經驗，比起減重，更需要被好好照顧。建議先和醫師或心理師聊一聊，也歡迎私訊我，我們一起找到不讓你有壓力的方式。</div>`;
+  if(r.wtloss) notices+=`<div class="notice alert"><b>建議先就醫確認</b>沒有刻意減重、體重卻明顯下降，需要先讓醫師檢查原因，確認沒問題後我們再一起規劃。</div>`;
+  if(r.preg) notices+=`<div class="notice warn"><b>懷孕或哺乳期間</b>這段時間不適合一般減重方案。歡迎和我一對一討論，依你的階段調整飲食。</div>`;
+  if(r.minor) notices+=`<div class="notice warn"><b>還在成長階段</b>未滿 18 歲不適合一般減重方案，建議和家長一起來諮詢，以均衡飲食和規律運動為主。</div>`;
+  if(r.under) notices+=`<div class="notice warn"><b>你的 BMI 偏低</b>目前不建議再減重，我們可以一起看看怎麼吃得均衡、維持健康體重。</div>`;
+  if(r.endo) notices+=`<div class="notice warn"><b>建議先檢查荷爾蒙相關的原因</b>你提到的狀況，有時和甲狀腺、多囊性卵巢或其他荷爾蒙問題有關。建議先到家醫科或新陳代謝科檢查，確認原因後，飲食調整會更有方向。</div>`;
+  if(r.medical.length) notices+=`<div class="notice warn"><b>你有需要一起考量的身體狀況</b>飲食調整前，建議先和你的醫師確認，這樣我們規劃時會更安心。</div>`;
+
+  const bars=ORDER.map(t=>`<div class="brow"><span>${TYPES[t].name}</span>
+    <div class="btrack"><i style="width:${r.sc[t]*10}%;background:${TYPES[t].color}"></i></div><em>${r.sc[t]}/10</em></div>`).join("");
+
+  const cta = {think:"先加 LINE，收到適合你類型的飲食小技巧",try:"預約 15 分鐘免費諮詢，我幫你從一個小目標開始",
+               ready:"預約諮詢，我幫你排出適合你類型的第一週飲食"}[a.q15];
+  const toLine = a.q15==="think"||noPlan;
+
+  app.innerHTML=`<div class="screen card" style="--tc:${T.color}">
+    <p class="tag">${r.mild?"你有一點這個類型的傾向":"你的體重卡關類型"}</p>
+    <h1 class="typename">${esc(T.name)}</h1>
+    ${C?`<span class="combo">${esc(T.name)} × ${esc(C.name)}</span>`:""}
+    <p class="quote">${esc(T.quote)}</p>
+    <p class="desc">${esc(T.desc)}</p>
+    ${C?`<p class="desc" style="margin-top:10px">你同時也有<b style="color:var(--ink)">${esc(C.name)}</b>的特徵：${esc(C.quote)}</p>`:""}
+    ${notices}
+
+    ${noPlan?"":`<section class="block"><h2>今天就能開始的一件事</h2>
+      <div class="action"><b>${esc(T.act.t)}</b><span>${esc(T.act.d)}</span></div></section>`}
+
+    <section class="block"><h2>你的五型分數</h2><div class="bars">${bars}</div></section>
+
+    <section class="block"><h2>身體數據</h2>
+      <div class="body-info">
+        <div class="stat"><small>BMI</small><b>${r.bmi}</b><span>${r.lvl}</span></div>
+        <div class="stat"><small>腰圍</small><b>${a.noWaist?"—":esc(a.waist)+" 公分"}</b>
+          <span>${a.noWaist?"下次可以量量看":r.waistHigh?"略高於建議值":"在建議範圍內"}</span></div>
+      </div>
+      <div class="shape-note"><b>脂肪分布：${esc(SHAPE_TEXT[a.shape].t)}</b>${esc(SHAPE_TEXT[a.shape].d)}${a.shape!=="apple"&&a.shape!=="gourd"&&r.waistHigh?"不過你的腰圍略高於建議值，腹部也值得一起留意。":""}</div>
+      <p class="small">BMI 分級依衛福部國健署標準。腰圍建議值為男性未滿 90、女性未滿 80 公分；本檢測以肚臍高度量測，數值僅供參考。</p>
+    </section>
+
+    <section class="block"><h2>${noPlan?"歡迎和我聊聊":"你的類型，需要的是更對的方法"}</h2>
+      ${toLine?`<a class="next" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">${noPlan?"加 LINE 和營養師聊聊":esc(cta)}</a>`
+              :`<button type="button" class="next" id="book">${esc(cta)}</button>
+                <a class="next ghost" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">先加 LINE 看看</a>`}
+    </section>
+
+    <button class="restart" id="re" type="button">重新檢測</button>
+    <p class="legal">本檢測參考衛生福利部國民健康署成人體位標準，以及 Mayo Clinic 研究團隊提出的肥胖表型架構設計，為初步自評參考，不能取代醫師診斷或治療。</p></div>`;
+  const book=document.getElementById("book"); if(book) book.onclick=()=>{state.err="";state.view="auth";render();};
+  document.getElementById("re").onclick=()=>{state.step=-1;state.a=blank();state.saved=false;state.rid="";state.c=blankContact();render();};
+}
+
+/* ===== 存資料（Apps Script） ===== */
+function newId(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("");
+}
+function post(body){
+  if(!CONFIG.scriptUrl){ console.warn("CONFIG.scriptUrl 還沒設定，資料沒有送出", body); return Promise.resolve({ok:true}); }
+  return fetch(CONFIG.scriptUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
+    .then(r=>r.json()).then(j=>{ if(!j.ok) throw new Error(j.error||"save failed"); return j; });
+}
+const hasAnswers = ()=>state.step>=STEPS.length;
+function labelsOf(id,vals){
+  const s=STEPS.find(x=>x.id===id);
+  return [].concat(vals).map(v=>(s.options.find(o=>o.v===v)||{}).label||v).join("、");
+}
+function record(){
+  const a=state.a, r=compute();
+  const d={sex:a.sex,age:a.age,height:a.h,weight:a.w,waist:a.noWaist?"未量":a.waist,bmi:r.bmi,bmiLevel:r.lvl,shape:SHAPE_TEXT[a.shape].t};
+  STEPS.filter(s=>s.type==="scale").forEach(s=>d[s.id]=a[s.id]);
+  ORDER.forEach(t=>d["s_"+t]=r.sc[t]);
+  d.type=(r.mild?"傾向：":"")+TYPES[r.main].name;
+  d.combo=r.combo?TYPES[r.combo].name:"";
+  d.q13=labelsOf("q13",a.q13); d.q14=labelsOf("q14",a.q14); d.q15=labelsOf("q15",a.q15);
+  d.flags=[[r.ed,"飲食疾患風險"],[r.wtloss,"非刻意體重下降"],[r.preg,"懷孕或哺乳"],[r.minor,"未成年"],[r.under,"BMI 過低"],
+           [r.endo,"疑似荷爾蒙相關"],[r.medical.length,"慢性病或用藥"],[r.waistHigh,"腰圍偏高"]].filter(x=>x[0]).map(x=>x[1]).join("、");
+  return d;
+}
+function saveDraft(){
+  if(state.saved) return;
+  state.saved=true; state.rid=newId();
+  post({action:"draft",id:state.rid,data:record()}).catch(e=>console.warn("draft",e));
+}
+
+/* ===== 預約：選擇登入方式 ===== */
+const UA=navigator.userAgent;
+const IN_APP=/Instagram|FBAN|FBAV|FB_IAB|Line\//i.test(UA);
+const IS_ANDROID=/Android/i.test(UA);
+const ICON_LINE=`<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5s6-3.5 8.2-6.1C21.7 14.1 22 12.6 22 11c0-4.4-4.5-8-10-8Z"/><path fill="#06C755" d="M7 9.2v3.6h2.2M10.4 9.2v3.6M12 12.8V9.2l2.4 3.6V9.2M17.6 9.2h-2v3.6h2M15.6 11h2" stroke="#06C755" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const baseUrl=()=>location.origin+location.pathname;
+const bookLink=()=>baseUrl()+"?book="+encodeURIComponent(state.rid);
+
+function renderAuth(){
+  if(!state.rid) state.rid=newId();
+  const link=bookLink();
+  const intent=`intent://${location.host}${location.pathname}?book=${encodeURIComponent(state.rid)}#Intent;scheme=https;package=com.android.chrome;end`;
+  let google="";
+  if(CONFIG.googleClientId){
+    google = IN_APP
+      ? `<button type="button" class="authbtn" id="gHintBtn" aria-expanded="false">用 Google 登入</button>
+         <div class="notice warn" id="gHint" hidden><b>需要用瀏覽器開啟</b>Google 不允許在 IG、LINE 這類 App 裡面登入。請點右上角「⋯」選「在瀏覽器中開啟」，或複製下面的連結貼到瀏覽器。
+           ${IS_ANDROID?`<a class="next" href="${esc(intent)}">用 Chrome 開啟</a>`:""}
+           <input class="linkbox" id="linkbox" readonly value="${esc(link)}" aria-label="預約連結">
+           <button type="button" class="next ghost" id="copy">複製連結</button></div>`
+      : `<div class="gbtn" id="gbtn"><button type="button" class="authbtn" disabled>Google 登入載入中…</button></div>`;
+  }
+  app.innerHTML=`<div class="screen card">
+    ${hasAnswers()?`<div class="top"><button class="back" id="back" type="button">‹ 回到結果</button></div>`:""}
+    <p class="part">預約諮詢</p><h2>先留下你的聯絡方式</h2>
+    <p class="hint">選一種方式就好，下一步都可以確認和修改。</p>
+    <div class="auth">
+      ${CONFIG.liffId?`<button type="button" class="authbtn line" id="byLine">${ICON_LINE}用 LINE 登入</button>`:""}
+      ${google}
+      ${CONFIG.liffId||CONFIG.googleClientId?`<div class="or">或</div>`:""}
+      <button type="button" class="authbtn" id="byHand">自己填寫</button>
+    </div>
+    <p class="err" role="alert">${esc(state.err)}</p></div>`;
+
+  const back=document.getElementById("back"); if(back) back.onclick=()=>{state.view="quiz";render();};
+  document.getElementById("byHand").onclick=()=>fill("manual",{},{});
+  const byLine=document.getElementById("byLine"); if(byLine) byLine.onclick=lineLogin;
+  const gHintBtn=document.getElementById("gHintBtn");
+  if(gHintBtn) gHintBtn.onclick=()=>{const h=document.getElementById("gHint");h.hidden=!h.hidden;gHintBtn.setAttribute("aria-expanded",String(!h.hidden));};
+  const copy=document.getElementById("copy");
+  if(copy) copy.onclick=()=>{
+    const box=document.getElementById("linkbox"); box.select();
+    (navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).catch(()=>document.execCommand("copy"))
+      .finally(()=>{copy.textContent="已複製，貼到瀏覽器打開";});
+  };
+  const gbtn=document.getElementById("gbtn"); if(gbtn) mountGoogle(gbtn);
+}
+
+/* 不管哪種方式，最後都進到確認頁；SSO 有抓到的欄位就用 SSO 的 */
+function fill(method,got,extra){
+  const c=state.c;
+  c.method=method; c.from={}; c.lineUserId=""; c.idToken="";
+  ["name","email"].forEach(k=>{ if(got[k]){ c[k]=got[k]; c.from[k]=true; } });
+  Object.assign(c,extra);
+  state.err=""; state.view="confirm"; render();
+}
+function loadScript(src){
+  return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>no(new Error("load "+src));document.head.appendChild(s);});
+}
+
+/* LINE（LIFF） */
+let liffReady=null;
+function initLiff(){
+  return liffReady||(liffReady=loadScript("https://static.line-scdn.net/liff/edge/2/sdk.js").then(()=>liff.init({liffId:CONFIG.liffId})));
+}
+async function lineLogin(){
+  try{
+    await initLiff();
+    if(!liff.isLoggedIn()){ liff.login({redirectUri:bookLink()+"&via=line"}); return; }
+    await lineFill();
+  }catch(e){ console.error(e); state.err="LINE 登入沒有成功，可以再試一次，或改用其他方式。"; render(); }
+}
+async function lineFill(){
+  const p=await liff.getProfile(), t=liff.getDecodedIDToken()||{};
+  fill("line",{name:p.displayName,email:t.email},{lineUserId:p.userId,idToken:liff.getIDToken()||""});
+}
+
+/* Google（Google Identity Services） */
+let gsiReady=null;
+function initGsi(){
+  return gsiReady||(gsiReady=loadScript("https://accounts.google.com/gsi/client").then(()=>
+    google.accounts.id.initialize({client_id:CONFIG.googleClientId,callback:onGoogle,ux_mode:"popup",auto_select:false})));
+}
+function mountGoogle(el){
+  initGsi().then(()=>{
+    el.innerHTML="";
+    google.accounts.id.renderButton(el,{type:"standard",theme:"outline",size:"large",shape:"pill",text:"continue_with",
+      width:Math.max(200,Math.min(400,el.clientWidth||320)),locale:"zh_TW"});
+  }).catch(()=>{ el.innerHTML=`<p class="err">Google 登入暫時無法使用，請改用其他方式。</p>`; });
+}
+function jwtPayload(t){
+  const b=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
+  const s=atob(b+"===".slice((b.length+3)%4));
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(s,ch=>ch.charCodeAt(0))));
+}
+function onGoogle(res){
+  const p=jwtPayload(res.credential);
+  fill("google",{name:p.name,email:p.email},{idToken:res.credential});
+}
+
+/* ===== 預約：確認聯絡資料 ===== */
+function renderConfirm(){
+  const c=state.c, src={line:"LINE",google:"Google"}[c.method], lineOpt=c.method==="line"&&CONFIG.lineIdOptionalForLine;
+  const f=(k,label,type,ph,opt,note)=>`<div class="field"><label for="c_${k}">${label}${opt?`<small class="optional">選填</small>`:""}${c.from[k]?`<small class="from">已從 ${src} 帶入</small>`:""}</label>
+    <div class="inwrap"><input id="c_${k}" type="${type}" ${type==="email"?'inputmode="email" autocomplete="email" autocapitalize="off"':""} ${k==="name"?'autocomplete="name"':""} value="${esc(c[k])}" placeholder="${ph}"></div>
+    ${note?`<p class="fnote">${note}</p>`:""}</div>`;
+  app.innerHTML=`<div class="screen card">
+    <div class="top"><button class="back" id="back" type="button">‹ 換一種方式</button></div>
+    <p class="part">預約諮詢</p><h2>確認你的聯絡資料</h2>
+    <p class="hint">${src?`已經幫你從 ${src} 帶入，有需要可以直接修改。`:"這些資料只有營養師本人看得到。"}</p>
+    <div class="fields">
+      ${f("name","姓名","text","怎麼稱呼你")}
+      ${f("lineId","LINE ID","text","例如 janice123",lineOpt,
+          lineOpt?"你已經用 LINE 登入並加入好友，我可以直接傳訊息給你，不填也沒關係。":"在 LINE「主頁 → 設定 → 個人檔案 → ID」可以找到。")}
+      ${f("email","Email","email","you@example.com",false,"<b>預約時請填同一個 Email</b>，我才能對上你的檢測結果。")}
+      <label class="check consent"><input type="checkbox" id="c_ok" ${c.consent?"checked":""}>
+        <span>我同意${esc(CONFIG.title)} ${esc(CONFIG.name)} 為了提供營養諮詢，蒐集並使用我在本檢測填寫的資料（包含身體與健康狀況）及聯絡方式。資料只有營養師本人可以查看，保存 ${esc(CONFIG.retention)}，我可以隨時透過 LINE 或 Email 要求查看、修改或刪除。</span></label>
+    </div>
+    <p class="err" id="cerr" role="alert">${esc(state.err)}</p>
+    <button type="button" class="next" id="send">下一步：選擇諮詢時間</button></div>`;
+
+  document.getElementById("back").onclick=()=>{readContact();state.err="";state.view="auth";render();};
+  document.getElementById("send").onclick=sendContact;
+}
+function readContact(){
+  const c=state.c;
+  ["name","lineId","email"].forEach(k=>c[k]=document.getElementById("c_"+k).value.trim());
+  c.consent=document.getElementById("c_ok").checked;
+}
+async function sendContact(){
+  readContact();
+  const c=state.c, btn=document.getElementById("send"), err=document.getElementById("cerr");
+  const lineOpt=c.method==="line"&&CONFIG.lineIdOptionalForLine;
+  const e=!c.name?"請填寫姓名"
+    :!c.lineId&&!lineOpt?"請填寫 LINE ID"
+    :!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)?"Email 格式好像不太對，再確認一下"
+    :!c.consent?"請勾選同意，我才能保存你的資料":"";
+  if(e){ err.textContent=e; return; }
+  btn.disabled=true; btn.textContent="送出中…"; err.textContent="";
+  try{
+    await post({action:"contact",id:state.rid,data:hasAnswers()?record():null,
+      contact:{method:c.method||"manual",name:c.name,lineId:c.lineId,email:c.email,lineUserId:c.lineUserId,idToken:c.idToken,consent:true}});
+  }catch(x){
+    console.error(x); btn.disabled=false; btn.textContent="下一步：選擇諮詢時間";
+    err.textContent="送出沒有成功，請確認網路後再試一次。"; return;
+  }
+  state.err=""; state.view="done"; render();
+}
+
+/* ===== 預約：前往 Google 預約頁 ===== */
+function renderDone(){
+  const c=state.c;
+  app.innerHTML=`<div class="screen card">
+    <p class="part">最後一步</p><h2>選一個你方便的時間</h2>
+    <p class="lead">預約時，請填寫這個 Email：</p>
+    <p class="emailbox">${esc(c.email)}</p>
+    <p class="desc">這樣我在諮詢前，就能先看過你的檢測結果，見面時直接進入重點。</p>
+    <a class="next" href="${esc(CONFIG.bookUrl||CONFIG.lineUrl)}">選擇諮詢時間</a>
+    ${c.method==="line"?"":`<a class="next ghost" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">也加我的 LINE</a>`}
+  </div>`;
+}
+
+/* ===== 啟動 ===== */
+function boot(){
+  const q=new URLSearchParams(location.search), rid=q.get("book");
+  if(rid&&/^[\w-]{16,64}$/.test(rid)){ state.rid=rid; state.saved=true; state.view="auth"; }
+  if(q.get("via")==="line"&&CONFIG.liffId){
+    app.innerHTML=`<div class="screen card"><p class="hint">LINE 登入中…</p></div>`;
+    initLiff().then(()=>liff.isLoggedIn()?lineFill():Promise.reject(new Error("not logged in")))
+      .catch(e=>{ console.error(e); state.err="LINE 登入沒有成功，可以再試一次，或改用其他方式。"; render(); });
+    return;
+  }
+  render();
+}
+boot();
+</script>
+</body>
+</html>

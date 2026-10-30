@@ -419,7 +419,8 @@ function renderResult(){
     </section>
 
     <section class="block"><h2>${noPlan?"歡迎和我聊聊":"你的類型，需要的是更對的方法"}</h2>
-      ${toLine?`<a class="next" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">${noPlan?"加 LINE 和營養師聊聊":esc(cta)}</a>`
+      ${toLine?`<a class="next" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">${noPlan?"加 LINE 和營養師聊聊":esc(cta)}</a>
+                <button type="button" class="next ghost" id="book">預約諮詢</button>`
               :`<button type="button" class="next" id="book">${esc(cta)}</button>
                 <a class="next ghost" href="${esc(CONFIG.lineUrl)}" target="_blank" rel="noopener">先加 LINE 看看</a>`}
     </section>
